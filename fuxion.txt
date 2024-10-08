@@ -1,0 +1,217 @@
+Paso 2: Configuración del Entorno
+Frontend:
+
+Configura un proyecto de React utilizando Create React App:
+bash
+Copiar código
+npx create-react-app mercado-libro-frontend
+cd mercado-libro-frontend
+Backend:
+
+Configura un proyecto de Node.js con Express:
+bash
+Copiar código
+mkdir mercado-libro-backend
+cd mercado-libro-backend
+npm init -y
+npm install express mysql2 cors jsonwebtoken bcryptjs
+Base de Datos:
+
+Instala MySQL y crea una base de datos, por ejemplo, mercado_libro.
+Paso 3: Desarrollo del Backend
+Configurar Express:
+
+Crea un archivo server.js y configura el servidor:
+js
+Copiar código
+const express = require('express');
+const cors = require('cors');
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+Conectar con MySQL:
+
+Crea un archivo db.js para la conexión a la base de datos:
+js
+Copiar código
+const mysql = require('mysql2');
+
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: 'password',
+  database: 'mercado_libro'
+});
+
+connection.connect((err) => {
+  if (err) throw err;
+  console.log('Connected to database');
+});
+
+module.exports = connection;
+Rutas de API:
+
+Define rutas para usuarios y productos. Ejemplo para usuarios:
+js
+Copiar código
+const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const db = require('./db');
+
+// Registro de usuario
+router.post('/register', (req, res) => {
+  const { username, password } = req.body;
+  bcrypt.hash(password, 10, (err, hash) => {
+    if (err) return res.status(500).send(err);
+    db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hash], (err, results) => {
+      if (err) return res.status(500).send(err);
+      res.status(201).send('User registered');
+    });
+  });
+});
+
+// Autenticación de usuario
+router.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  db.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
+    if (err) return res.status(500).send(err);
+    if (results.length === 0) return res.status(400).send('User not found');
+    
+    const user = results[0];
+    bcrypt.compare(password, user.password, (err, match) => {
+      if (err) return res.status(500).send(err);
+      if (!match) return res.status(400).send('Invalid password');
+
+      const token = jwt.sign({ id: user.id }, 'secret_key', { expiresIn: '1h' });
+      res.json({ token });
+    });
+  });
+});
+
+module.exports = router;
+Middleware de Seguridad:
+
+Añade middleware para proteger las rutas:
+js
+Copiar código
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, 'secret_key', (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+};
+
+// Uso del middleware
+app.use('/protected-route', authenticateToken, (req, res) => {
+  res.send('This is a protected route');
+});
+Paso 4: Desarrollo del Frontend
+Configurar React Router:
+
+Instala React Router:
+
+bash
+Copiar código
+npm install react-router-dom
+Configura rutas básicas en App.js:
+
+jsx
+Copiar código
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+Crear Componentes:
+
+Crea componentes para el registro y la autenticación:
+jsx
+Copiar código
+// src/pages/RegisterPage.js
+import React, { useState } from 'react';
+
+const RegisterPage = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleRegister = () => {
+    fetch('http://localhost:5000/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+      .then(response => response.text())
+      .then(data => alert(data))
+      .catch(error => console.error('Error:', error));
+  };
+
+  return (
+    <div>
+      <h2>Register</h2>
+      <input
+        type="text"
+        value={username}
+        onChange={e => setUsername(e.target.value)}
+        placeholder="Username"
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        placeholder="Password"
+      />
+      <button onClick={handleRegister}>Register</button>
+    </div>
+  );
+};
+
+export default RegisterPage;
+Conectar Frontend y Backend:
+
+Usa fetch o axios para conectar el frontend con el backend.
+Asegúrate de manejar la autenticación y almacenar el token JWT en el almacenamiento local o en un contexto de React para las solicitudes protegidas.
+Paso 5: Pruebas y Despliegue
+Pruebas:
+
+Realiza pruebas unitarias y de integración para asegurar el correcto funcionamiento de cada componente y endpoint.
+Usa herramientas como Jest para el frontend y Mocha o Chai para el backend.
+Despliegue:
+
+Frontend: Despliega tu aplicación React en plataformas como Vercel, Netlify o GitHub Pages.
+Backend: Despliega tu servidor Express en servicios como Heroku, Vercel o AWS.
+Paso 6: Seguridad y Optimización
+Seguridad:
+
+Asegúrate de usar HTTPS para todas las conexiones.
+Implementa medidas de seguridad en la base de datos, como el uso de parámetros en las consultas SQL para evitar inyecciones.
+Optimización:
+
+Usa herramientas como Webpack para optimizar el tamaño de los archivos y mejorar el rendimiento de la aplicación.
+Considera implementar caché y otras técnicas para mejorar la velocidad de carga y la experiencia del usuario.

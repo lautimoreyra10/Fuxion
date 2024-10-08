@@ -1,0 +1,39 @@
+/* Navbar Styles */
+.navbar {
+    background-color: #22262e;
+    color: #e7e9e5;
+    padding-left: 3rem;
+    padding-right: 3rem;
+    padding-top: 0.9rem;
+    padding-bottom: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0px 2px 10px 0px rgba(0,0,0,0.41);
+  }
+  .navbar .nameLogo {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .navbar .search-bar {
+    width: 30%;
+  }
+  
+  .navbar input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+  }
+  
+  .navbar .links {
+    display: flex;
+    gap: 40px;
+  }
+  
+  .navbar a {
+    color: #fff;
+    text-decoration: none;
+  }
+  
