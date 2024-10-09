@@ -6,15 +6,22 @@ const authenticateToken = require('../middlewares/authenticateToken'); // Asegú
 // Obtener todos los productos
 router.get('/', async (req, res) => {
   try {
-    //const products = await Product.find().populate('user', 'email'); // Opcional: poblamos la relación con el usuario
-    //res.json(products);
+    const products = await Product.find().populate('user', 'email'); // Opcional: poblamos la relación con el usuario
+    res.json(products);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-
+const authenticateRole = (requiredRole) => {
+  return (req, res, next) => {
+    if (req.user.role !== requiredRole) {
+      return res.status(403).json({ message: 'No tienes permiso para realizar esta acción' });
+    }
+    next();
+  };
+};
 // Publicar un nuevo producto
-router.post('/', authenticateToken, async (req, res) => {
+router.post("/add-product", authenticateToken, authenticateRole('seller'), async (req, res) => {
   const { name, description, price, category, imageUrl } = req.body;
 
   const product = new Product({
@@ -23,14 +30,13 @@ router.post('/', authenticateToken, async (req, res) => {
     price,
     category,
     imageUrl,
-    user: req.user.id // Asegúrate de que el usuario esté autenticado
+    user: req.user.id,
   });
 
   try {
     const newProduct = await product.save();
     res.status(201).json(newProduct);
   } catch (err) {
-    console.error('Eror al guardar el producto', err);
     res.status(400).json({ message: err.message });
   }
 });

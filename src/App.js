@@ -6,6 +6,7 @@ import AddProductPage from '../src/pages/AddProductPage';
 import './styles.css'; // Styles css
 import ProductPage from './pages/ProductPage';
 import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';  // Protect routes
 
 
@@ -17,6 +18,7 @@ const App = () => {
         <Route path="/products" element={<ProductPage />} />
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         
         {/* Protegemos la ruta /add-product */}
         <Route 

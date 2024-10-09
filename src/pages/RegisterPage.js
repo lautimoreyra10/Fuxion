@@ -61,6 +61,8 @@ const RegisterPage = () => {
         <input type="button" value="Registrar" onClick={handleRegister} />
       </form>
       {message && <div className="message">{message}</div>}
+       {/* Aquí está el enlace para registrarse */}
+       <p>¿Ya tenes cuenta? <a href="/login">Ingresar aquí</a></p>
     </div>
   );
 };
