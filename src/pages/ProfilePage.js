@@ -12,20 +12,19 @@ const ProfilePage = () => {
     card: '',
     imageUrl: ''
   });
-  const [loading, setLoading] = useState(true); // Nueva variable de estado para manejar la carga
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [redirect, setRedirect] = useState(false); // Nuevo estado para manejar la redirección
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    
-    // Si no hay token, redirige al login
+
     if (!token) {
       navigate('/login');
       return;
     }
-    
-    // Verificar si el token es válido
+
     fetch("http://localhost:5000/api/users/profile", {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -33,23 +32,21 @@ const ProfilePage = () => {
     })
       .then((res) => {
         if (!res.ok) {
-          // Si no es válido, redirige al login
           throw new Error('Token inválido o expirado');
         }
         return res.json();
       })
       .then((data) => {
         setUserData(data);
-        setLoading(false); // Datos cargados, quitar el estado de carga
+        setLoading(false);
       })
       .catch((err) => {
         console.error(err);
-        localStorage.removeItem('token'); // Eliminar token inválido
-        navigate('/login'); // Redirigir al login
+        localStorage.removeItem('token');
+        navigate('/login');
       });
   }, [navigate]);
 
-  // Mostrar pantalla de carga si los datos no han sido cargados aún
   if (loading) {
     return <div>Cargando Perfil...</div>;
   }
@@ -63,33 +60,39 @@ const ProfilePage = () => {
   };
 
   const handleFormSubmit = async (e) => {
-  e.preventDefault();
-  const token = localStorage.getItem('token');
+    e.preventDefault();
+    const token = localStorage.getItem('token');
 
-  try {
-    const res = await fetch("http://localhost:5000/api/users/profile", {
-      method: 'PUT',  // Suponiendo que usas PUT para actualizar el perfil
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(userData),
-    });
+    try {
+      const res = await fetch("http://localhost:5000/api/users/profile", {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(userData),
+      });
 
-    if (res.ok) {
-      const updatedData = await res.json();
-      setUserData(updatedData);  // Actualiza los datos locales del perfil
-      setMessage("Perfil actualizado con éxito");
-    } else {
-      const error = await res.text();
-      setMessage(`Error al actualizar el perfil: ${error}`);
+      if (res.ok) {
+        const updatedData = await res.json();
+        setUserData(updatedData);
+        setMessage("Perfil actualizado con éxito");
+
+        // Establecer redirección después de 5 segundos
+        setRedirect(true);
+        setTimeout(() => {
+          navigate('/');
+        }, 5000);
+      } else {
+        const error = await res.text();
+        setMessage(`Error al actualizar el perfil: ${error}`);
+      }
+    } catch (error) {
+      setMessage('Error en la conexión');
     }
-  } catch (error) {
-    setMessage('Error en la conexión');
-  }
-};
+  };
 
-return (
+  return (
   <div className="profile-container">
     <h1>Perfil del Usuario</h1>
     <form className="profile-form" onSubmit={handleFormSubmit}>
@@ -191,9 +194,9 @@ return (
     </form>
 
     {message && <p className="message">{message}</p>}
-  </div>
-);
-
+    {redirect && <p>Redirigiendo a la página principal en 5 segundos...</p>}
+    </div>
+  );
 };
 
 export default ProfilePage;
