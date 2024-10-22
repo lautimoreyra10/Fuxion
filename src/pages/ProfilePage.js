@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import "../profile.css";
 import { useNavigate } from 'react-router-dom';
+import Resizer from 'react-image-file-resizer';
 
 const ProfilePage = () => {
+  const [imageFile, setImageFile] = useState(null);
   const [userData, setUserData] = useState({
     firstName: '',
     lastName: '',
@@ -51,6 +53,32 @@ const ProfilePage = () => {
     return <div>Cargando Perfil...</div>;
   }
 
+  // Función para redimensionar la imagen antes de subirla (opcional)
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (validImageTypes.includes(file.type)) {
+        Resizer.imageFileResizer(
+          file,
+          300, // ancho
+          300, // alto
+          'JPEG', // formato
+          100, // calidad
+          0, // rotación
+          (uri) => {
+            setImageFile(uri); // Configurar la imagen redimensionada
+            setMessage('');
+          },
+          'blob' // Formato de salida
+        );
+      } else {
+        setMessage('El archivo no es una imagen válida');
+        setImageFile(null);
+      }
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUserData({
@@ -62,15 +90,24 @@ const ProfilePage = () => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('firstName', userData.firstName);
+    formData.append('lastName', userData.lastName);
+    formData.append('address', userData.address);
+    formData.append('document', userData.document);
+    formData.append('card', userData.card);
+    if (imageFile) {
+      formData.append('image', imageFile); // Añade la imagen al formData si existe
+    }
 
     try {
       const res = await fetch("http://localhost:5000/api/users/profile", {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+          // NO añadir 'Content-Type' cuando se envía FormData
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(userData),
+        body: formData,
       });
 
       if (res.ok) {
@@ -81,7 +118,7 @@ const ProfilePage = () => {
         // Establecer redirección después de 5 segundos
         setRedirect(true);
         setTimeout(() => {
-          navigate('/');
+          navigate('/add-product');
         }, 5000);
       } else {
         const error = await res.text();
@@ -188,6 +225,11 @@ const ProfilePage = () => {
         )}
       </div>
 
+      <div className="form-group">
+        <label>Subir imagen de perfil</label>
+        <input type="file" accept="image/*" onChange={handleImageUpload} />
+      </div>
+
       <button type="submit" className="save-button">
         Guardar Cambios
       </button>
@@ -195,7 +237,7 @@ const ProfilePage = () => {
 
     {message && <p className="message">{message}</p>}
     {redirect && <p>Redirigiendo a la página principal en 5 segundos...</p>}
-    </div>
+  </div>
   );
 };
 

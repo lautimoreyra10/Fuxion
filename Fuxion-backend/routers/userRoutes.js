@@ -1,11 +1,23 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const multer = require('multer');
+const path = require('path');
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const Product = require("../models/Products");
 const authenticateToken = require("../middlewares/authenticateToken");
 
 const router = express.Router();
+// Configuración de multer para almacenar las imágenes en la carpeta 'uploads'
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Carpeta donde se guardarán las imágenes
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Nombre único para cada archivo
+  }
+});
+
+const upload = multer({ storage: storage });
 
 router.post("/register", async (req, res) => {
   const { email, password} = req.body;
@@ -67,7 +79,7 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Error en el servidor" });
   }
 });
-router.post('/profile', authenticateToken, async (req, res) => {
+router.put('/profile', authenticateToken, upload.single('image'), async (req, res) => {
   const { firstName, lastName, document, address, card } = req.body;
 
   try {
@@ -77,18 +89,31 @@ router.post('/profile', authenticateToken, async (req, res) => {
     }
 
     // Actualizamos los datos del usuario
-    user.firstName = firstName;
-    user.lastName = lastName;
-    user.document = document;
-    user.address = address;
-    user.card = card;
-    user.role = 'seller';  // Asignamos el rol de 'seller' al completar el perfil
+    user.firstName = firstName || user.firstName;
+    user.lastName = lastName || user.lastName;
+    user.document = document || user.document;
+    user.address = address || user.address;
+    user.card = card || user.card;
+
+    // Cambiar el rol de 'user' a 'seller' si aplica
+    if (user.role === 'user') {
+      user.role = 'seller';
+    }
+
+    // Si se subió una nueva imagen, actualizamos el campo imageUrl
+    if (req.file) {
+      user.imageUrl = `/uploads/${req.file.filename}`; // Ruta de la imagen
+    }
 
     await user.save();
 
-    res.status(200).json({ message: 'Perfil completado. Ya puedes agregar productos y realizar compras.' });
+    res.status(200).json({
+      message: 'Perfil actualizado con éxito. Ya puedes agregar productos y realizar compras.',
+      role: user.role,  // Devolver el rol actualizado en la respuesta
+      user
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Error al completar el perfil' });
+    res.status(500).json({ message: 'Error al actualizar el perfil' });
     console.error("Error:", err);
   }
 });
