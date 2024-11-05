@@ -12,7 +12,8 @@ const ProfilePage = () => {
     address: '',
     document: '',
     card: '',
-    imageUrl: ''
+    imageUrl: '',
+    role: '',
   });
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -104,7 +105,6 @@ const ProfilePage = () => {
       const res = await fetch("http://localhost:5000/api/users/profile", {
         method: 'PUT',
         headers: {
-          // NO añadir 'Content-Type' cuando se envía FormData
           Authorization: `Bearer ${token}`,
         },
         body: formData,

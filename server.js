@@ -27,8 +27,6 @@ const upload = multer({
 
 // Conectar a la base de datos
 connectDB();
-
-// Aplicar express.json() solo en rutas que no manejen archivos
 app.use(express.json({ limit: '10mb' }));
 
 // Rutas protegidas

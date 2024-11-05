@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Products');
-const authenticateToken = require('../middlewares/authenticateToken'); // Asegúrate de tener este middleware
-const checkRole = require('../middlewares/checkRole'); // Asegúrate de tener este middleware
+const authenticateToken = require('../middlewares/authenticateToken');
+const checkRole = require('../middlewares/checkRole');
+const generateToken = require('../middlewares/generateToken');
 // Obtener todos los productos
 router.get('/', async (req, res) => {
   try {
@@ -13,7 +14,7 @@ router.get('/', async (req, res) => {
   }
 });
 // Publicar un nuevo producto
-router.post("/add-product", authenticateToken, checkRole('seller'), async (req, res) => {
+router.post("/add-product", authenticateToken, checkRole('seller'),generateToken, async (req, res) => {
   const { name, description, price, category, imageUrl } = req.body;
 
   const product = new Product({

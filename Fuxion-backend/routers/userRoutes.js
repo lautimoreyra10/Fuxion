@@ -97,7 +97,10 @@ router.put('/profile', authenticateToken, upload.single('image'), async (req, re
 
     // Cambiar el rol de 'user' a 'seller' si aplica
     if (user.role === 'user') {
+      console.log('Cambiando el rol de user a seller');
       user.role = 'seller';
+    }else {
+      console.log('El rol del usuario no es user, es:', user.role);
     }
 
     // Si se subió una nueva imagen, actualizamos el campo imageUrl

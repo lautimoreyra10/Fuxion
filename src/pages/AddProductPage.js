@@ -30,23 +30,30 @@ const AddProductPage = () => {
       return;
     }
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setMessage('Debes iniciar sesión para agregar un producto.');
+      return;
+    }
+
     try {
       const res = await fetch('http://localhost:5000/api/products/add-product', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Autenticación
+          'Authorization': `Bearer ${token}`, // Autenticación
         },
-        body: JSON.stringify({ name, description, price, category, imageUrl }),
+        body: JSON.stringify({ name, description, price, category, imageUrl }), // Cambia esto si es un archivo de imagen
       });
 
       if (res.ok) {
         const data = await res.json();
         setMessage('Producto publicado con éxito');
-        navigate('/'); // Redirigir a la página de inicio o donde prefieras
+        navigate('/');
       } else {
-        const error = await res.json();
+        const error = await res.json().catch(() => ({ message: 'Error desconocido' }));
         setMessage(`Error: ${error.message || 'Error al agregar el producto'}`);
+        console.log(error);
       }
     } catch (error) {
       setMessage('Error en la conexión');
