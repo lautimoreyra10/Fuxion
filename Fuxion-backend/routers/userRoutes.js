@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 router.post("/register", async (req, res) => {
-  const { email, password} = req.body;
+  const { email, password, firstName, lastName, document, address, card } = req.body;
 
   if (!email || !password) {
     return res.status(400).send("Se requiere correo electrónico y contraseña");
